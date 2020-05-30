@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Exit if any command fails
+set -e
+
+# Check if jq is installed
+command -v jq >/dev/null 2>&1 || { echo >&2 "This script requires jq, please install it using you package manager."; exit 1; }
+
+DOMAIN_URL_FRIENDLY=$(echo $DOMAIN | tr "." "_")
+FULL_URL="$SUBDOMAIN.$DOMAIN"
+
+CURRENT_IP=$(curl -s https://v4.ident.me/)
+
+echo "Getting current DNS records"
+curl -s -S "https://api.netlify.com/api/v1/dns_zones/$DOMAIN_URL_FRIENDLY/dns_records?access_token=$ACCESS_TOKEN" | jq -c '.[]' | while read record; do
+	HOST=$(echo $record | jq -r '.hostname')
+
+	if [ "$HOST" = "$FULL_URL" ]
+	then
+		VALUE=$(echo $record | jq -r '.value')
+
+		if [ "$VALUE" != "$CURRENT_IP" ]
+		then
+			ID=$(echo $record | jq -r '.id')
+
+			echo "Updating IP from \"$VALUE\" to \"$CURRENT_IP\""
+
+			echo "Deleting the old DNS record"
+
+			curl -X DELETE "https://api.netlify.com/api/v1/dns_zones/$DOMAIN_URL_FRIENDLY/dns_records/$ID?access_token=$ACCESS_TOKEN"
+
+			echo "Creating the new DNS record"
+
+			curl -s -S -H "Content-Type: application/json" \
+			-X POST \
+			-d "{\"type\":\"A\",\"hostname\":\"$SUBDOMAIN\",\"value\":\"$CURRENT_IP\"}" \
+			"https://api.netlify.com/api/v1/dns_zones/$DOMAIN_URL_FRIENDLY/dns_records?access_token=$ACCESS_TOKEN" > /dev/null
+
+			echo "Done updating DNS record"
+			exit 0
+		else
+			echo "New IP and current IP in DNS is equal, will do nothing"
+			exit 0
+		fi
+	fi
+done
