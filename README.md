@@ -1,12 +1,12 @@
-# Netlify Dynamic DNS using Bash
-A lightweight bash script designed to be running as a cron job. It fetches you public IP v4 address and updates your Netlify DNS with it.
+# Netlify Dynamic DNS using Shell
+A lightweight shell script designed to be running as a cron job. It fetches you public IP v4 address and updates your Netlify DNS with it.
 
 It's build with speed, efficiency and maintainability in mind. Using only one external dependency it can run almost anywhere.
 
 ## Installation
 ### Clone this repo
-```bash
-git clone https://github.com/filipjohansson/netlify-dynamic-dns-bash.git
+```sh
+git clone https://github.com/filipjohansson/netlify-dynamic-dns-shell.git
 ```
 
 ### Dependencies
@@ -22,11 +22,11 @@ The script is using environment variables. You can and should use the following 
 | SUBDOMAIN | photos | The subdomain you want to update the DNS for, in this example the full domain would be photos.example.com |
 
 It's up to you how you want to manage your environment variables, but if you don't like to mess with them you can run the script like this.
-```bash
+```sh
 ACCESS_TOKEN="YOUR_ACCESS_TOKEN" DOMAIN="example.com" SUBDOMAIN="photos" ./netlify-ddns
 ```
 
 If you keep your environment variables somewhere else you run the script like this
-```bash
+```sh
 ./netlify-ddns
 ```
