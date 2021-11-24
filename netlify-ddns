@@ -3,13 +3,20 @@
 # Exit if any command fails
 set -e
 
+# Check if environment variables are set
+if [ -z "$ACCESS_TOKEN" ]; then echo "Environment variable ACCESS_TOKEN must be set."; exit 1; fi
+if [ -z "$DOMAIN" ]; then echo "Environment variable DOMAIN must be set."; exit 1; fi
+if [ -z "$SUBDOMAINS" ]; then echo "Environment variable SUBDOMAINS must be set."; exit 1; fi
+
 # Check if jq is installed
 command -v jq >/dev/null 2>&1 || { echo >&2 "This script requires jq, please install it using your package manager."; exit 1; }
 
 DOMAIN_URL_FRIENDLY=$(echo "$DOMAIN" | tr "." "_")
+
+echo "Getting current IP..."
 CURRENT_IP=$(curl -s https://v4.ident.me/)
 
-echo "Getting current DNS records for \"$DOMAIN\""
+echo "Getting current DNS records for \"$DOMAIN\"..."
 curl -s -S "https://api.netlify.com/api/v1/dns_zones/$DOMAIN_URL_FRIENDLY/dns_records?access_token=$ACCESS_TOKEN" | jq -c '.[]' | while read -r record; do
 	HOST=$(echo "$record" | jq -r '.hostname')
 
@@ -22,23 +29,23 @@ curl -s -S "https://api.netlify.com/api/v1/dns_zones/$DOMAIN_URL_FRIENDLY/dns_re
 			if [ "$VALUE" != "$CURRENT_IP" ]; then
 				ID=$(echo "$record" | jq -r '.id')
 
-				echo "Updating IP for \"$CURRENT_SUBDOMAIN\" from \"$VALUE\" to \"$CURRENT_IP\""
+				echo "Will update IP in DNS record for \"$CURRENT_SUBDOMAIN\" from \"$VALUE\" to \"$CURRENT_IP\"."
 
-				echo "Deleting the old DNS record for \"$CURRENT_SUBDOMAIN\""
+				echo "Deleting the old DNS record for \"$CURRENT_SUBDOMAIN\"..."
 
 				curl -X DELETE "https://api.netlify.com/api/v1/dns_zones/$DOMAIN_URL_FRIENDLY/dns_records/$ID?access_token=$ACCESS_TOKEN"
 
-				echo "Creating the new DNS record for \"$CURRENT_SUBDOMAIN\""
+				echo "Creating the new DNS record for \"$CURRENT_SUBDOMAIN\"..."
 
 				curl -s -S -H "Content-Type: application/json" \
 				-X POST \
 				-d "{\"type\":\"A\",\"hostname\":\"$CURRENT_SUBDOMAIN\",\"value\":\"$CURRENT_IP\"}" \
 				"https://api.netlify.com/api/v1/dns_zones/$DOMAIN_URL_FRIENDLY/dns_records?access_token=$ACCESS_TOKEN" > /dev/null
 
-				echo "Done updating DNS record for \"$CURRENT_SUBDOMAIN\""
+				echo "Done updating DNS record for \"$CURRENT_SUBDOMAIN\"."
 				exit 0
 			else
-				echo "New IP and current IP in DNS is equal for \"$CURRENT_SUBDOMAIN\", will do nothing"
+				echo "Current IP and IP in DNS record are equal for \"$CURRENT_SUBDOMAIN\", will do nothing."
 				exit 0
 			fi
 		fi
