@@ -8,7 +8,8 @@ if [ -z "$ACCESS_TOKEN" ]; then echo "Environment variable ACCESS_TOKEN must be 
 if [ -z "$DOMAIN" ]; then echo "Environment variable DOMAIN must be set."; exit 1; fi
 if [ -z "$SUBDOMAINS" ]; then echo "Environment variable SUBDOMAINS must be set."; exit 1; fi
 
-# Check if jq is installed
+# Check if curl and jq is installed
+command -v curl >/dev/null 2>&1 || { echo >&2 "This script requires curl, please install it using your package manager."; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo >&2 "This script requires jq, please install it using your package manager."; exit 1; }
 
 DOMAIN_URL_FRIENDLY=$(echo "$DOMAIN" | tr "." "_")
