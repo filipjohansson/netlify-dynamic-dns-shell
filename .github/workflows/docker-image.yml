@@ -25,5 +25,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: filipjson/netlify-dynamic-dns-shell:latest
-          tags: filipjson/netlify-dynamic-dns-shell:${{ github.ref_name }}
+          tags: |
+            filipjson/netlify-dynamic-dns-shell:latest
+            filipjson/netlify-dynamic-dns-shell:${{ github.ref_name }}
